@@ -1,0 +1,39 @@
+{
+    "[JSON]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[YAML]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "files.trimTrailingWhitespace": true
+    },
+    "python.formatting.blackArgs": ["--line-length", "88"],
+    // Enable type checking in python code.
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyPath":"mypy",
+    "python.linting.mypyArgs": [
+        "--config-file=.vscode/mypy.ini"
+    ],
+    
+    "python.linting.flake8Args": [
+        "--max-line-length=88",
+        "--ignore=E402,F841,F401,E302,E305,W503,E203"
+        ,
+    ],
+    "editor.rulers": [
+        88
+    ],
+    "terminal.integrated.shellArgs.windows": "-ExecutionPolicy ByPass",
+    
+    // autodocstring
+    "autoDocstring.docstringFormat": "sphinx"
+
+}
+  
