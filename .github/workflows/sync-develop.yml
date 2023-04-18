@@ -1,0 +1,29 @@
+
+name: Sync master back to development
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:  
+
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+    name: Syncing branches
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+          submodules: true
+          token: ${{ secrets.GHP_GITHUB_TOKEN }}
+          fetch-depth: 0
+      - run: git submodule update --recursive --remote
+
+      - name: git merge master -> development
+        run: |
+          git checkout development
+          git merge ${{ inputs.MERGE_BRANCH }}
+          git remote set-url --push origin https://bjornamr:${{ secrets.GHP_GITHUB_TOKEN}}@github.com/${{ github.repository }}.git
+          git push origin HEAD --force
