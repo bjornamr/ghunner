@@ -1,8 +1,10 @@
+import typing
 from .helper import get_pages
 from github.Deployment import Deployment
 from github.DeploymentStatus import DeploymentStatus
 from github.PaginatedList import PaginatedList
 from github import Github
+from datetime import datetime
 
 
 def is_completed(deployment_statuses: list[DeploymentStatus]) -> bool:
@@ -40,7 +42,13 @@ def get_deployment_status(deployment_statuses: list[DeploymentStatus]) -> str:
 
 
 def all_deployments_completed(
-    gh: Github, owner: str, repository: str, **kwargs
+    gh: Github,
+    owner: str,
+    repository: str,
+    from_date: datetime,
+    to_date: datetime,
+    filter: dict[str, typing.Any],
+    **kwargs,
 ) -> tuple[bool, dict[int, str], list[Deployment]]:
     """gets all deployments, checks if they are completed
 
@@ -57,7 +65,9 @@ def all_deployments_completed(
         f"{owner}/{repository}"
     ).get_deployments(**kwargs)
 
-    deployments: list[Deployment] = get_pages(deployments_paged)  # type: ignore
+    deployments: list[Deployment] = get_pages(
+        deployments_paged, from_date=from_date, to_date=to_date, filter=filter
+    )  # type: ignore
     completed = 0
     statuses = {}
     for deployment in deployments:
