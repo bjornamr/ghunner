@@ -39,7 +39,7 @@ def getter():
     "--wait-all",
     required=False,
     type=bool,
-    default=True,
+    default=False,
     help="wait until all tasks are finished.",
 )
 @option(
@@ -97,6 +97,7 @@ def all_deployments(
                     indent=2,
                 )
             )
+            return
 
 
 # minimum wait time
@@ -188,6 +189,7 @@ def filtered_deployments(**kwargs):
     "--wait-all",
     required=False,
     type=bool,
+    default=False,
     help="wait until all tasks are finished.",
 )
 def all_runners(
@@ -288,8 +290,7 @@ def all_runners(
                     indent=2,
                 )
             )
-
-    return
+            return
 
 
 if __name__ == "__main__":
