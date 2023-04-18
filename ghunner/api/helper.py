@@ -35,6 +35,9 @@ def filter_objects(
     if filter is None:
         return objects, date_skip
 
+    # if no filter has been applied, return empty
+    # filter list.
+    filter_statuses = []
     if "statuses" in filter_copy:
         filter_statuses = filter_copy["statuses"]
         del filter_copy["statuses"]
@@ -48,7 +51,11 @@ def filter_objects(
                 ):
                     date_skip = True
                     continue
-        if hasattr(general_obj, "status") and hasattr(general_obj, "conclusion"):
+        if (
+            len(filter_statuses) > 0
+            and hasattr(general_obj, "status")
+            and hasattr(general_obj, "conclusion")
+        ):
             status = getattr(general_obj, "status")
             conclusion = getattr(general_obj, "conclusion")
             if status not in filter_statuses and conclusion not in filter_statuses:
