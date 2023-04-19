@@ -55,12 +55,18 @@ def getter():
     option("--sha", required=False, help="git commit hash"),
     constraint=mutually_exclusive,
 )
+@option(
+    "--created_at_from", required=False, help="search from one date YYYY-MM-DD HH:MM:SS"
+)
+@option("--created_at_to", required=False, help="search to date YYYY-MM-DD HH:MM:SS")
 def all_deployments(
     owner: str,
     repository: str,
     task: str,
     tag: str,
     sha: str,
+    created_at_from: datetime,
+    created_at_to: datetime,
     wait_all: str,
     wait_time: int,
 ):
@@ -72,11 +78,27 @@ def all_deployments(
     if sha:
         kwargs["sha"] = sha
 
+    if created_at_from:
+        created_at_from: datetime = datetime.strptime(  # type: ignore[no-redef]
+            created_at_from, "%Y-%m-%d %H:%M:%S"
+        )
+    if created_at_to:
+        created_at_to: datetime = datetime.strptime(  # type: ignore[no-redef]
+            created_at_to, "%Y-%m-%d %H:%M:%S"
+        )
+
     gh = login()
     deployments_running = True
+    filter = {}
     while deployments_running:
         completed, statuses, deployments = all_deployments_completed(
-            gh, owner, repository, **kwargs
+            gh,
+            owner,
+            repository,
+            created_at_from,
+            created_at_to,
+            filter,
+            **kwargs,
         )
         deployments_running = not completed
 

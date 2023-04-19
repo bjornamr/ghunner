@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ghunner"
-version = "0.1.2"
+version = "0.1.3"
 description = ""
 authors = ["Bjørnar Moe Remmen <bjornarremm@gmail.com>"]
 

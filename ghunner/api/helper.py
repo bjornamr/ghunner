@@ -1,6 +1,45 @@
 from github.PaginatedList import PaginatedList
+from github.Deployment import Deployment
+from github.WorkflowRun import WorkflowRun
 from datetime import datetime
 from copy import deepcopy
+
+
+def deployments_filtering(
+    deployment: Deployment,
+    from_date: datetime = None,
+    to_date: datetime = None,
+):
+    date = deployment.created_at
+    skip = False
+    date_break = False
+
+    if not ((from_date and from_date <= date) or (to_date and date <= to_date)):
+        date_break = True
+        skip = True
+
+    return date_break, skip
+
+
+def workflows_filtering(
+    workflow_run: WorkflowRun,
+    statuses: list[str],
+    from_date: datetime = None,
+    to_date: datetime = None,
+) -> tuple[bool, bool]:
+    date = workflow_run.created_at
+    status = workflow_run.status
+    conclusion = workflow_run.conclusion
+    skip = False
+    date_break = False
+    if not ((from_date and from_date <= date) or (to_date and date <= to_date)):
+        date_break = True
+        skip = True
+
+    if len(statuses) > 0 and status not in statuses and conclusion not in statuses:
+        skip = True
+
+    return date_break, skip
 
 
 def filter_objects(
@@ -43,22 +82,16 @@ def filter_objects(
         del filter_copy["statuses"]
     for general_obj in objects:
         similar = 0
-        if hasattr(general_obj, "created_at"):
-            date = getattr(general_obj, "created_at")
-            if from_date or to_date:
-                if not (
-                    (from_date and from_date <= date) or (to_date and date <= to_date)
-                ):
-                    date_skip = True
-                    continue
-        if (
-            len(filter_statuses) > 0
-            and hasattr(general_obj, "status")
-            and hasattr(general_obj, "conclusion")
-        ):
-            status = getattr(general_obj, "status")
-            conclusion = getattr(general_obj, "conclusion")
-            if status not in filter_statuses and conclusion not in filter_statuses:
+
+        if isinstance(general_obj, WorkflowRun):
+            date_skip, skip = workflows_filtering(
+                general_obj, filter_statuses, from_date, to_date
+            )
+            if skip:
+                continue
+        if isinstance(general_obj, Deployment):
+            date_skip, skip = deployments_filtering(general_obj, from_date, to_date)
+            if skip:
                 continue
 
         for variable, variable_value in filter_copy.items():
