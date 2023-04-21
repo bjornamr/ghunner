@@ -112,12 +112,20 @@ def all_deployments(
             **kwargs,
         )
         elapsed_time = perf_counter() - start_time
-        # used to wait wait for the workflow to start.
-        if not wait_all or elapsed_time > minimum_wait_time:
-            deployments_running = not completed
-        if wait_all and not completed or (elapsed_time <= minimum_wait_time):
+        # used to wait for the workflows to finish
+        if (wait_all and not completed) or (
+            minimum_wait_time > 0 and elapsed_time <= minimum_wait_time
+        ):
             time.sleep(wait_time)
-        else:
+        # used to wait wait for the workflow to start.
+        elif not wait_all or (
+            minimum_wait_time > 0 and elapsed_time > minimum_wait_time
+        ):
+            deployments_running = not completed
+
+        if ((not wait_all) or (wait_all and completed)) and (
+            elapsed_time > minimum_wait_time
+        ):
             deployments_serialized = [deployment.raw_data for deployment in deployments]
             status_values = set(statuses.values())
             all_success = len(status_values) == 1 and "success" in status_values
@@ -232,7 +240,7 @@ def filtered_deployments(**kwargs):
     required=False,
     type=int,
     default=0,
-    help="wait a minimum of K seconds, to see if status changes.",
+    help="wait a minimum of K seconds before returning. continue to ping github.",
 )
 def all_runners(
     owner: str,
@@ -313,13 +321,21 @@ def all_runners(
         )
 
         elapsed_time = perf_counter() - start_time
+
+        # used to wait for the workflows to finish
+        if (wait_all and running) or (
+            minimum_wait_time > 0 and elapsed_time <= minimum_wait_time
+        ):
+            time.sleep(wait_time)
         # used to wait wait for the workflow to start.
-        if not wait_all or elapsed_time > minimum_wait_time:
+        elif not wait_all or (
+            minimum_wait_time > 0 and elapsed_time > minimum_wait_time
+        ):
             workflows_running = running
 
-        if wait_all and running or (elapsed_time <= minimum_wait_time):
-            time.sleep(wait_time)
-        else:
+        if ((not wait_all) or (wait_all and not running)) and (
+            elapsed_time > minimum_wait_time
+        ):
             workflow_runs_serialized = [workflow.raw_data for workflow in workflow_runs]
             statuses = [workflow.status for workflow in workflow_runs]
             conclusions = [workflow.conclusion for workflow in workflow_runs]

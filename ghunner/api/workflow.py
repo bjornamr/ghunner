@@ -52,8 +52,8 @@ def all_runners_completed(
 
 
 def is_worklow_runs_running(workflow_runs: list[WorkflowRun]) -> bool:
-    """Checks if a workflow run status is finished or not.
-       early return if one workflow is not completed.
+    """Checks if a workflow run conclusion is set or not.
+       early return if one workflow is not completed e.g. still running.
 
 
     :param workflow_runs: workflow object
@@ -62,12 +62,6 @@ def is_worklow_runs_running(workflow_runs: list[WorkflowRun]) -> bool:
     :rtype: bool
     """
     for workflow_run in workflow_runs:
-        if workflow_run.conclusion in [
-            "in_progress",
-            "queued",
-            "requested",
-            "waiting",
-            "pending",
-        ]:
+        if workflow_run.conclusion is None:
             return True
     return False
