@@ -14,7 +14,10 @@ def deployments_filtering(
     skip = False
     date_break = False
 
-    if not ((from_date and from_date <= date) or (to_date and date <= to_date)):
+    if not (
+        (from_date is not None and from_date <= date)
+        or (to_date is not None and date <= to_date)
+    ):
         date_break = True
         skip = True
 
@@ -32,7 +35,10 @@ def workflows_filtering(
     conclusion = workflow_run.conclusion
     skip = False
     date_break = False
-    if not ((from_date and from_date <= date) or (to_date and date <= to_date)):
+    if not (
+        (from_date is not None and from_date <= date)
+        or (to_date is not None and date <= to_date)
+    ):
         date_break = True
         skip = True
 
