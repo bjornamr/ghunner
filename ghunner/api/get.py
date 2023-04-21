@@ -1,5 +1,6 @@
 import json
 import time
+from time import perf_counter
 from datetime import datetime
 import click
 import cloup
@@ -35,6 +36,16 @@ def getter():
 @option("--owner", required=True, help="repository owner - organization")
 @option("--repository", required=True, help="repository name")
 @option("--task", required=False, help="task name - e.g. job name")
+@option_group(
+    "reference to commit or tag",
+    option("--tag", required=False, help="full tag name"),
+    option("--sha", required=False, help="git commit hash"),
+    constraint=mutually_exclusive,
+)
+@option(
+    "--created_at_from", required=False, help="search from one date YYYY-MM-DD HH:MM:SS"
+)
+@option("--created_at_to", required=False, help="search to date YYYY-MM-DD HH:MM:SS")
 @option(
     "--wait-all",
     required=False,
@@ -49,16 +60,13 @@ def getter():
     default=10,
     help="number of seconds to wait after each request",
 )
-@option_group(
-    "reference to commit or tag",
-    option("--tag", required=False, help="full tag name"),
-    option("--sha", required=False, help="git commit hash"),
-    constraint=mutually_exclusive,
-)
 @option(
-    "--created_at_from", required=False, help="search from one date YYYY-MM-DD HH:MM:SS"
+    "--minimum-wait-time",
+    required=False,
+    type=int,
+    default=0,
+    help="wait a minimum of K seconds, to see if status changes.",
 )
-@option("--created_at_to", required=False, help="search to date YYYY-MM-DD HH:MM:SS")
 def all_deployments(
     owner: str,
     repository: str,
@@ -69,6 +77,7 @@ def all_deployments(
     created_at_to: datetime,
     wait_all: str,
     wait_time: int,
+    minimum_wait_time: int,
 ):
     kwargs = {}
     if task:
@@ -90,6 +99,8 @@ def all_deployments(
     gh = login()
     deployments_running = True
     filter = {}
+    start_time = perf_counter()
+
     while deployments_running:
         completed, statuses, deployments = all_deployments_completed(
             gh,
@@ -100,9 +111,11 @@ def all_deployments(
             filter,
             **kwargs,
         )
-        deployments_running = not completed
-
-        if wait_all and not completed:
+        elapsed_time = perf_counter() - start_time
+        # used to wait wait for the workflow to start.
+        if not wait_all or elapsed_time > minimum_wait_time:
+            deployments_running = not completed
+        if wait_all and not completed or (elapsed_time <= minimum_wait_time):
             time.sleep(wait_time)
         else:
             deployments_serialized = [deployment.raw_data for deployment in deployments]
@@ -214,6 +227,13 @@ def filtered_deployments(**kwargs):
     default=False,
     help="wait until all tasks are finished.",
 )
+@option(
+    "--minimum-wait-time",
+    required=False,
+    type=int,
+    default=0,
+    help="wait a minimum of K seconds, to see if status changes.",
+)
 def all_runners(
     owner: str,
     repository: str,
@@ -226,6 +246,7 @@ def all_runners(
     created_at_to: str,
     wait_all: bool,
     wait_time: int,
+    minimum_wait_time: int,
 ):
     """_summary_
 
@@ -279,8 +300,9 @@ def all_runners(
 
     gh = login()
     workflows_running = True
+    start_time = perf_counter()
     while workflows_running:
-        completed, workflow_runs = all_runners_completed(
+        running, workflow_runs = all_runners_completed(
             gh,
             owner,
             repository,
@@ -290,8 +312,12 @@ def all_runners(
             **kwargs,
         )
 
-        workflows_running = not completed
-        if wait_all and not completed:
+        elapsed_time = perf_counter() - start_time
+        # used to wait wait for the workflow to start.
+        if not wait_all or elapsed_time > minimum_wait_time:
+            workflows_running = running
+
+        if wait_all and running or (elapsed_time <= minimum_wait_time):
             time.sleep(wait_time)
         else:
             workflow_runs_serialized = [workflow.raw_data for workflow in workflow_runs]
@@ -306,7 +332,7 @@ def all_runners(
                         "workflow_runs": workflow_runs_serialized,
                         "statuses": statuses,
                         "conclusions": conclusions,
-                        "all_completed": completed,
+                        "all_completed": not running,
                         "all_success": all_success,
                     },
                     indent=2,
