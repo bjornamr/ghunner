@@ -123,7 +123,9 @@ def all_deployments(
         ):
             deployments_running = not completed
 
-        if (not wait_all) or (wait_all and completed):
+        if ((not wait_all) or (wait_all and completed)) and (
+            elapsed_time > minimum_wait_time
+        ):
             deployments_serialized = [deployment.raw_data for deployment in deployments]
             status_values = set(statuses.values())
             all_success = len(status_values) == 1 and "success" in status_values
@@ -238,7 +240,7 @@ def filtered_deployments(**kwargs):
     required=False,
     type=int,
     default=0,
-    help="wait a minimum of K seconds, to see if status changes.",
+    help="wait a minimum of K seconds before returning. continue to ping github.",
 )
 def all_runners(
     owner: str,
@@ -331,7 +333,9 @@ def all_runners(
         ):
             workflows_running = running
 
-        if (not wait_all) or (wait_all and not running):
+        if ((not wait_all) or (wait_all and not running)) and (
+            elapsed_time > minimum_wait_time
+        ):
             workflow_runs_serialized = [workflow.raw_data for workflow in workflow_runs]
             statuses = [workflow.status for workflow in workflow_runs]
             conclusions = [workflow.conclusion for workflow in workflow_runs]
